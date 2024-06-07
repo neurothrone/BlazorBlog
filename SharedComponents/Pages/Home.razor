@@ -1,0 +1,48 @@
+@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject IBlogApi _api
+@* *@
+@* <ul> *@
+@*     @foreach (var p in posts) *@
+@*     { *@
+@*         <li> *@
+@*             <a href="/Post/@p.Id">@p.Title</a> *@
+@*         </li> *@
+@*     } *@
+@* </ul> *@
+@* *@
+@* @code{ *@
+@*     protected List<BlogPost> posts = new(); *@
+@* *@
+@*     protected override async Task OnInitializedAsync() *@
+@*     { *@
+@*         posts = await _api.GetBlogPostsAsync(10, 0); *@
+@*         await base.OnInitializedAsync(); *@
+@*     } *@
+@* } *@
+
+<ul>
+    <Virtualize ItemsProvider="LoadPosts" Context="p">
+        <li>
+            <a href="/Post/@p.Id">@p.Title</a>
+        </li>
+    </Virtualize>
+</ul>
+
+@code {
+    public int totalBlogposts { get; set; }
+
+    private async ValueTask<ItemsProviderResult<BlogPost>> LoadPosts(ItemsProviderRequest request)
+    {
+        if (totalBlogposts == 0)
+        {
+            totalBlogposts = await _api.GetBlogPostCountAsync();
+        }
+
+        var numblogposts = Math.Min(request.Count, totalBlogposts - request.StartIndex);
+        var blogposts = await _api.GetBlogPostsAsync(numblogposts, request.StartIndex);
+        return new ItemsProviderResult<BlogPost>(blogposts, totalBlogposts);
+    }
+
+}
